@@ -21,6 +21,8 @@ JitterType=1;
 ClockRandSeed(6);
 
 try
+    PsychDefaultSetup(2);
+    DisableKeysForKbCheck(KbName('f22')); % some keyboards will stuck f22, disable it
     % !! comment this out if high precision is required
     Screen('Preference', 'SkipSyncTests', 1);
     scrn=max(Screen('screens')); % find last screen
@@ -56,7 +58,7 @@ try
     % The fourth column is 0=left, 1=right arrow; 2 is null
     % The fifth column is ladder number (1-4);
     % The sixth column is the value currently in "LadderX", corresponding to this...
-    % The seventh column is subject response (no response is 0);
+    % The seventh column is subject response (left is 1, right is 2, no response is 0, multiple press is -1);
     % The eighth column is their reaction time
     % The ninth column is time since beginning of trial
     % The tenth column is ladder movement (-1 for down, +1 for up, 0 for N/A)
@@ -180,9 +182,13 @@ try
                     [keyIsDown,~,keyCode] = KbCheck;
 
                     if keyIsDown
-                        if find(keyCode) == KbName('q'), Screen('closeall'); ActiveWire(1,'CloseDevice'); return; end
-                        if find(keyCode)==LEFT || find(keyCode)==RIGHT
-                            Seeker(totalcnt,7)=find(keyCode);
+                        press_valid = ismember([LEFT, RIGHT], find(keyCode));
+                        if any(press_valid)
+                            if sum(press_valid) > 1
+                                Seeker(totalcnt,7) = -1;
+                            else
+                                Seeker(totalcnt,7) = find(press_valid);
+                            end
                             Seeker(totalcnt,8)=GetSecs-start_time;
                             noresp=0;
                         end
@@ -192,7 +198,7 @@ try
                 if opts.Practice
                     %%% punish subject for making an error
                     if Seeker(totalcnt,3)==0 && noresp
-                        xword = double('è¯·åœ¨1ç§’å†…æŒ‰é”®');
+                        xword = double('ÇëÔÚ1ÃëÄÚ°´¼ü');
                         DrawFormattedText(w, xword, 'center', 'center', 255);
                         Screen('Flip',w);
                         pause(0.5);
@@ -200,7 +206,7 @@ try
                     end
 
                     if Seeker(totalcnt,3)==0 && ( (Seeker(totalcnt,4)==0 && Seeker(totalcnt,7)==RIGHT) || ( Seeker(totalcnt,4)==1 && Seeker(totalcnt,7)==LEFT ) )
-                        xword=double('é”™äº†ï¼');
+                        xword=double('´íÁË£¡');
                         Screen('DrawText',w, xword, 'center', 'center',255);
                         Screen('Flip',w);
                         WaitTill(GetSecs+2);
@@ -293,7 +299,7 @@ try
             subplot(2,1,1);
             plot(xvals,meanrt,'.','markersize',30);
             axis([1 NBLOCKS 100 900]);
-            title('æŒ‰é”®å¹³å‡ååº”æ—¶(ms)')
+            title('°´¼üÆ½¾ù·´Ó¦Ê±(ms)')
             if type==1
                 subplot(2,1,2);
                 %    plot(xvals,dimerrors,'.','markersize',30);
@@ -309,7 +315,7 @@ try
             tex=Screen('MakeTexture',w,fbimage);
             Screen('DrawTexture',w,tex);
         end
-        DrawFormattedText(w, double('æœ¬è½®ç»“æŸ\næŒ‰é”®ç»§ç»­...'), 'center', 'center', [255 0 0]);
+        DrawFormattedText(w, double('±¾ÂÖ½áÊø\n°´¼ü¼ÌĞø...'), 'center', 'center', [255 0 0]);
         Screen('Flip',w);
         KbReleaseWait;
         WaitTill('');
@@ -322,7 +328,7 @@ try
     save(outfile, 'Seeker','Task_Duration');
 
     % ladder for feedback
-    str=double('æœ¬ä»»åŠ¡ç»“æŸ,æŒ‰é”®é€€å‡º');
+    str=double('±¾ÈÎÎñ½áÊø,°´¼üÍË³ö');
     DrawFormattedText(w, str, 'center', 'center', 255);
 
     Screen('Flip',w);
