@@ -26,6 +26,8 @@ try
     scrn=max(Screen('screens')); % find last screen
     HideCursor;
     w=Screen('OpenWindow',scrn,0);  % open a dark screen
+    Screen('TextFont',w, 'SimHei');
+    Screen('TextSize',w, 50);
     rect=Screen (w,'rect');
     Priority(MaxPriority(w));   % raise priority for better timing
     [xcenter, ycenter] = RectCenter(rect);
@@ -38,10 +40,7 @@ try
     %%%%************** DEFINE PARAMS HERE *************
     WAITTIME=1;
     Step=50;
-    OCI=0.5;
     arrow_duration=1;
-
-    % if JitterType==1, NBLOCKS=4; else NBLOCKS=4; end
     NBLOCKS=4;
 
     meanrt=zeros(1,NBLOCKS);
@@ -49,18 +48,6 @@ try
     dimerrors=zeros(1,NBLOCKS);
     LEFT=KbName('f'); % key 1
     RIGHT=KbName('j'); % key 2
-
-    %%%% Setting up the sound stuff
-    % sound('open');
-    % pause(0.5)
-    % samp = 22254.545454;
-    % aud_stim = sin(1:0.25:1000);
-    % aud_delay = [];
-    % aud_padding = [ zeros(1, round(0.005*samp)) ];	%%% Padding lasts for 5ms
-    % aud_vec = [  aud_delay  aud_padding  aud_stim  0 ];	% Vector fed into SND
-    % 	sound(aud_vec,samp); %play sound to start
-    % The zero at the end prevents a click at the start
-    % of the next sound to be played. Suggested by Denis Pelli
 
     %%%%%%%%%%%%%% Stimuli and Response on same matrix, pre-determined
     % The first column is  trial number;
@@ -86,13 +73,9 @@ try
     Screen('DrawTexture',w,tex);
     Screen('Flip',w);
     WaitTill({'f' 'j'});
-
     totalcnt=1;  % this is the overall counter
 
     for block=1:NBLOCKS % change number of blocks
-
-        Screen('TextFont',w, 'SimHei');
-        Screen('TextSize',w, 50);
 
         %%%%%%%%%%%%%%%%%%%%%%%%% MAKES TRIAL SEQUENCE **********
         %%% this code correctly creates 64 (actually 128 with null) trials such that in every 16 trials there is one of each staircase
@@ -103,12 +86,12 @@ try
             for qblock=1:4
                 LadderOrder=randperm(4);
                 arrows = [1 1 0 0];
-                [p  rand_idx]=sort(rand(1,4));
+                [~,  rand_idx]=sort(rand(1,4));
                 arrows=arrows(rand_idx);
                 for st=1:4
                     %there are 4 in each, one stop, three go
                     mini = [1 arrows(1) LadderOrder(st); 0 arrows(2) 0; 0 arrows(3) 0; 0 arrows(4) 0;];
-                    [p  rand_idx]=sort(rand(1,4));
+                    [~,  rand_idx]=sort(rand(1,4));
                     mini=mini(rand_idx,:);
                     start=(tc-1)*64+(qblock-1)*16+(st-1)*4+1;
                     endof=(tc-1)*64+(qblock-1)*16+(st)*4;
@@ -118,10 +101,9 @@ try
         end
 
         %%%%%%%%%%%%%%%%%%% GETS STAIRCASE STUFF SET UP %%%%%%%%%%%%%%
-        if block==1,  %only sets this stuff up once
+        if block==1  %only sets this stuff up once
 
             if JitterType==1
-
                 Ladder1=140;
                 Ladder2=180;
                 Ladder3=220;
@@ -185,19 +167,20 @@ try
                 while(GetSecs-start_time < arrow_duration && noresp) || (Seeker(totalcnt,3)==1 && notone)
 
                     % new stopsignal
-                    if Seeker(totalcnt,3)==1 & GetSecs - start_time >=Seeker(totalcnt,6)/1000 & notone,
+                    if Seeker(totalcnt,3)==1 && GetSecs - start_time >=Seeker(totalcnt,6)/1000 && notone
                         Screen('FrameOval', w, [255 0 0], circle, circle_stroke);
-                        if (Seeker(totalcnt,4)==0),
+                        if (Seeker(totalcnt,4)==0)
                             DrawFormattedText(w, '<', 'center', 'center', [255 255 255]);
                         else
                             DrawFormattedText(w, '>', 'center', 'center', [255 255 255]); %, [], 0, 0, 2
-                        end;
+                        end
                         start_time=Screen('Flip',w);
                         notone=0;
                     end
-                    [keyIsDown,secs,keyCode] = KbCheck;
+                    [keyIsDown,~,keyCode] = KbCheck;
+
                     if keyIsDown
-                        if find(keyCode) == KbName('q'), screen('closeall'); ActiveWire(1,'CloseDevice'); return; end
+                        if find(keyCode) == KbName('q'), Screen('closeall'); ActiveWire(1,'CloseDevice'); return; end
                         if find(keyCode)==LEFT || find(keyCode)==RIGHT
                             Seeker(totalcnt,7)=find(keyCode);
                             Seeker(totalcnt,8)=GetSecs-start_time;
@@ -209,7 +192,7 @@ try
                 if opts.Practice
                     %%% punish subject for making an error
                     if Seeker(totalcnt,3)==0 && noresp
-                        xword = double('ÇëÔÚ1ÃëÄÚ°´¼ü');
+                        xword = double('è¯·åœ¨1ç§’å†…æŒ‰é”®');
                         DrawFormattedText(w, xword, 'center', 'center', 255);
                         Screen('Flip',w);
                         pause(0.5);
@@ -217,7 +200,7 @@ try
                     end
 
                     if Seeker(totalcnt,3)==0 && ( (Seeker(totalcnt,4)==0 && Seeker(totalcnt,7)==RIGHT) || ( Seeker(totalcnt,4)==1 && Seeker(totalcnt,7)==LEFT ) )
-                        xword=double('´íÁË£¡');
+                        xword=double('é”™äº†ï¼');
                         Screen('DrawText',w, xword, 'center', 'center',255);
                         Screen('Flip',w);
                         WaitTill(GetSecs+2);
@@ -304,14 +287,13 @@ try
                 meanrt(block) = 1000*median(Seeker( Seeker(:,2)==block & Seeker(:,3)==0 & Seeker(:,8)>0,8));
             end
 
-
             %make new feedback figure for each block
             xvals=1:1:NBLOCKS;
             fh=figure;
             subplot(2,1,1);
             plot(xvals,meanrt,'.','markersize',30);
             axis([1 NBLOCKS 100 900]);
-            title('°´¼üÆ½¾ù·´Ó¦Ê±(ms)')
+            title('æŒ‰é”®å¹³å‡ååº”æ—¶(ms)')
             if type==1
                 subplot(2,1,2);
                 %    plot(xvals,dimerrors,'.','markersize',30);
@@ -323,17 +305,16 @@ try
             fname = sprintf('Results/feedbackpic%dsub%d.jpg',block,subject_code);
             print(fh,'-djpeg', '-r100', fname);
             close(fh);
-            %    fbimage = {imread(fname, 'jpg')};
             fbimage = imread(fname, 'jpg');
             tex=Screen('MakeTexture',w,fbimage);
             Screen('DrawTexture',w,tex);
-            DrawFormattedText(w, '°´¼ü¼ÌĞø...', 'center', rect(4)*0.9, [255 0 0]);
-            Screen('Flip',w);
-            KbReleaseWait;WaitTill('');
-            Screen('Flip',w);
         end
-
-    end; %end block loop
+        DrawFormattedText(w, double('æœ¬è½®ç»“æŸ\næŒ‰é”®ç»§ç»­...'), 'center', 'center', [255 0 0]);
+        Screen('Flip',w);
+        KbReleaseWait;
+        WaitTill('');
+        Screen('Flip',w);
+    end %end block loop
 
     Task_Duration(2)=GetSecs-Task_Duration(1);
     c=clock;
@@ -341,16 +322,12 @@ try
     save(outfile, 'Seeker','Task_Duration');
 
     % ladder for feedback
-    stopsignalAnalysis(Seeker)
-
-    %     sq=imread('HaveaRest.jpg','jpg');
-    %     tex=Screen('MakeTexture',w,sq);
-    %     Screen('DrawTexture',w,tex);
-    str=double('±¾ÈÎÎñ½áÊø,°´¼üÍË³ö');
-    DrawFormattedText(w, str, 'center', 'center', 255,0, 0, 0, 2);
+    str=double('æœ¬ä»»åŠ¡ç»“æŸ,æŒ‰é”®é€€å‡º');
+    DrawFormattedText(w, str, 'center', 'center', 255);
 
     Screen('Flip',w);
-    WaitTill({'f' 'j'});%    Task.startTime =t;
+    KbReleaseWait;
+    WaitTill({'f' 'j'});
     Screen('Flip',w);
 
 catch
