@@ -20,6 +20,22 @@ JitterType=1;
 %rand('state',sum(100*clock));
 ClockRandSeed(6);
 
+%% open lpt
+% io0bj = io64;
+% status = io64(io0bj);
+% address = hex2dec('3FF8'); % standard LPTl output port address, PKU: CFF8, CAS: D020, blackrock: 3FE8, qiyuan MEG: 3F88
+% io64(io0bj, address, 0);
+% 1 session_start_trigger=2;
+% 2 session_end_trigger=4;
+% 3 left_trigger=8;
+% 4 right_trigger=16;
+% 5 redstop_trigger=32;
+% 6 block_trigger=64;
+% 7 response_trigger=128;
+% total 4 block;
+trialnum = [2,4,8,16,32,64,128];
+trigger_lasting = 0.02;
+timestamp = nan(4,155);
 try
     PsychDefaultSetup(2);
     DisableKeysForKbCheck(KbName('f22')); % some keyboards will stuck f22, disable it
@@ -75,9 +91,25 @@ try
     Screen('DrawTexture',w,tex);
     Screen('Flip',w);
     WaitTill({'f' 'j'});
+    % for istart = 1:5
+    % io64(io0bj,address,trialnum(1));
+    % timestamp(1,istart)= GetSecs;
+    % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+    % io64(io0bj,address,0);
+    % WaitSecs(0.2);
+    % end
+
     totalcnt=1;  % this is the overall counter
 
     for block=1:NBLOCKS % change number of blocks
+
+        % io64(io0bj,address,trialnum(6));
+        % timestamp(block,6)= GetSecs;
+        % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+        % io64(io0bj,address,0);
+        % WaitSecs(0.2);
+        Screen('TextFont',w, 'SimHei');
+        Screen('TextSize',w, 50);
 
         %%%%%%%%%%%%%%%%%%%%%%%%% MAKES TRIAL SEQUENCE **********
         %%% this code correctly creates 64 (actually 128 with null) trials such that in every 16 trials there is one of each staircase
@@ -153,9 +185,19 @@ try
                 if (Seeker(totalcnt,4)==0)
                     Screen('FrameOval', w, 255, circle, circle_stroke);
                     DrawFormattedText(w, '<', 'center', 'center', [255 255 255]);
+                    % io64(io0bj,address,trialnum(3));
+                    % timestamp(block,(a-1)*16+b)= GetSecs;
+                    % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+                    % io64(io0bj,address,0);
+                    % WaitSecs(0.2);
                 else
                     Screen('FrameOval', w, 255, circle, circle_stroke);
                     DrawFormattedText(w, '>', 'center', 'center', [255 255 255]); %, [], 0, 0, 2
+                    % io64(io0bj,address,trialnum(4));
+                    % timestamp(block,(a-1)*16+b)= GetSecs;
+                    % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+                    % io64(io0bj,address,0);
+                    % WaitSecs(0.2);
                 end
                 start_time=Screen('Flip',w);
 
@@ -165,9 +207,9 @@ try
 
                 %%% the while loop only exits when arrow duration time is up OR a button is pressed
                 WaitSecs(0.1);
-
+                istop = 0;
                 while(GetSecs-start_time < arrow_duration && noresp) || (Seeker(totalcnt,3)==1 && notone)
-
+                    istop = istop+1;
                     % new stopsignal
                     if Seeker(totalcnt,3)==1 && GetSecs - start_time >=Seeker(totalcnt,6)/1000 && notone
                         Screen('FrameOval', w, [255 0 0], circle, circle_stroke);
@@ -176,6 +218,11 @@ try
                         else
                             DrawFormattedText(w, '>', 'center', 'center', [255 255 255]); %, [], 0, 0, 2
                         end
+                        % io64(io0bj,address,trialnum(5));
+                        % timestamp(block,istop+70)= GetSecs;
+                        % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+                        % io64(io0bj,address,0);
+                        % WaitSecs(0.2);
                         start_time=Screen('Flip',w);
                         notone=0;
                     end
@@ -194,6 +241,11 @@ try
                         end
                     end
                 end    %end while
+                % io64(io0bj,address,trialnum(7));
+                % timestamp(block,(a-1)*16+b+86)= GetSecs;
+                % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+                % io64(io0bj,address,0);
+                % WaitSecs(0.2);
                 Screen('Flip',w); %
                 if opts.Practice
                     %%% punish subject for making an error
@@ -330,7 +382,13 @@ try
     % ladder for feedback
     str=double('本任务结束,按键退出');
     DrawFormattedText(w, str, 'center', 'center', 255);
-
+    % for iend = 1:5
+    % io64(io0bj,address,trialnum(2));
+    % timestamp(1,end-iend)= GetSecs;
+    % WaitSecs(trigger_lasting);% the duration of the pulse, 20ms
+    % io64(io0bj,address,0);
+    % WaitSecs(0.2);
+    % end
     Screen('Flip',w);
     KbReleaseWait;
     WaitTill({'f' 'j'});
