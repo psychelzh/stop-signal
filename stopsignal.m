@@ -6,6 +6,12 @@ arguments
     opts.DrawFeedback {mustBeNumericOrLogical} = false
 end
 
+if opts.Practice
+    task_name = 'StopSignalPrac';
+else
+    task_name = 'StopSignal';
+end
+
 Task_Duration=ones(1,2);
 Task_Duration(1)=GetSecs;
 
@@ -376,7 +382,7 @@ try
 
     Task_Duration(2)=GetSecs-Task_Duration(1);
     c=clock;
-    outfile=sprintf('Results/StopSignal_Sub%03d_%s_%02.0f_%02.0f.mat',subject_code,date,c(4),c(5));
+    outfile=sprintf('Results/%s_Sub%03d_%s_%02.0f_%02.0f.mat',task_name,subject_code,date,c(4),c(5));
     save(outfile, 'Seeker','Task_Duration');
 
     % ladder for feedback
@@ -396,7 +402,7 @@ try
 
 catch
     c=clock;
-    outfile=sprintf('Results/Temp_StopSignal_Sub%03d_%s_%02.0f_%02.0f.mat',subject_code,date,c(4),c(5));
+    outfile=sprintf('Results/Temp_%s_Sub%03d_%s_%02.0f_%02.0f.mat',task_name,subject_code,date,c(4),c(5));
     save(outfile, 'Seeker','Task_Duration');
     Screen('CloseAll'); Priority(0);
     rethrow(lasterror);
