@@ -1,15 +1,13 @@
-function stopsignal (subject_code, opts)
+function stopsignal (subject_code, part)
 
-arguments
-    subject_code {mustBeNonnegative}
-    opts.Practice {mustBeNumericOrLogical} = false
-    opts.DrawFeedback {mustBeNumericOrLogical} = false
-end
+if nargin < 1, error('Please input subject code'); end
+if nargin < 2, part = 'test'; end
 
-if opts.Practice
-    task_name = 'StopSignalPrac';
-else
-    task_name = 'StopSignal';
+switch part
+    case 'prac'
+        task_name = 'StopSignalPrac';
+    case 'test'
+        task_name = 'StopSignal';
 end
 
 Task_Duration=ones(1,2);
@@ -87,10 +85,11 @@ try
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%% TRIAL PRESENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if opts.Practice
-        instr_pic = 'MateStop/instPrac.JPG';
-    else
-        instr_pic = 'MateStop/inst.JPG';
+    switch part
+        case 'prac'
+            instr_pic = 'MateStop/instPrac.JPG';
+        case 'test'
+            instr_pic = 'MateStop/inst.JPG';
     end
     sq=imread(instr_pic,'jpg');  %%% instruction
     tex=Screen('MakeTexture',w,sq);
@@ -253,7 +252,7 @@ try
                 % io64(io0bj,address,0);
                 % WaitSecs(0.2);
                 Screen('Flip',w); %
-                if opts.Practice
+                if strcmp(part, 'prac')
                     %%% punish subject for making an error
                     if Seeker(totalcnt,3)==0 && noresp
                         xword = double('请在1秒内按键');
@@ -339,40 +338,6 @@ try
                 end
             end
         end %end of miniblock
-
-        %%%% FEEDBACK %%%%%
-        if opts.DrawFeedback
-            %  block      		  go           response
-            if type==1
-                meanrt(block) = 1000*median(Seeker( Seeker(:,2)==block & Seeker(:,3)==0 & Seeker(:,7)~=0  & ( (Seeker(:,4)==1 & Seeker(:,7)==RIGHT) | ( Seeker(:,4)==0 & Seeker(:,7)==LEFT ) ),8));
-                dimerrors(block)=sum((Seeker(:,2)==block & Seeker(:,3)==0 & ( (Seeker(:,4)==0 & Seeker(:,7)==RIGHT) | ( Seeker(:,4)==1 & Seeker(:,7)==LEFT ) )));
-                stoprate(block)=length(find(Seeker(:,2)==block & Seeker(:,10)==1))/16;
-            else
-                meanrt(block) = 1000*median(Seeker( Seeker(:,2)==block & Seeker(:,3)==0 & Seeker(:,8)>0,8));
-            end
-
-            %make new feedback figure for each block
-            xvals=1:1:NBLOCKS;
-            fh=figure;
-            subplot(2,1,1);
-            plot(xvals,meanrt,'.','markersize',30);
-            axis([1 NBLOCKS 100 900]);
-            title('按键平均反应时(ms)')
-            if type==1
-                subplot(2,1,2);
-                %    plot(xvals,dimerrors,'.','markersize',30);
-                plot(xvals,stoprate,'.','markersize',30);
-                axis([1 NBLOCKS 0 1]);
-                title('Stop Rate')
-            end
-
-            fname = sprintf('Results/feedbackpic%dsub%d.jpg',block,subject_code);
-            print(fh,'-djpeg', '-r100', fname);
-            close(fh);
-            fbimage = imread(fname, 'jpg');
-            tex=Screen('MakeTexture',w,fbimage);
-            Screen('DrawTexture',w,tex);
-        end
         DrawFormattedText(w, double('本轮结束\n按键继续...'), 'center', 'center', [255 0 0]);
         Screen('Flip',w);
         KbReleaseWait;
@@ -402,8 +367,10 @@ try
 
 catch
     c=clock;
-    outfile=sprintf('Results/Temp_%s_Sub%03d_%s_%02.0f_%02.0f.mat',task_name,subject_code,date,c(4),c(5));
-    save(outfile, 'Seeker','Task_Duration');
+    if exist('Seeker', 'var')
+        outfile=sprintf('Results/Temp_%s_Sub%03d_%s_%02.0f_%02.0f.mat',task_name,subject_code,date,c(4),c(5));
+        save(outfile, 'Seeker','Task_Duration');
+    end
     Screen('CloseAll'); Priority(0);
     rethrow(lasterror);
 end
